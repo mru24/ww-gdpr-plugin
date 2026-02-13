@@ -2,361 +2,504 @@
 
 // CREATE MENU ITEM
 function wwgcbar_menu_link() {
-	add_options_page(
-		'WW GDPR Bar Link Options',
-		'WW GDPR Bar Link',
-		'manage_options',
-		'wwgcbar-options',
-		'wwgcbar_options_content'
-	);
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    add_options_page(
+        'WW GDPR Bar Link Options',
+        'WW GDPR Bar Link',
+        'manage_options',
+        'wwgcbar-options',
+        'wwgcbar_options_content'
+    );
 }
 add_action('admin_menu', 'wwgcbar_menu_link');
 
 // CREATE SETTINGS LINK
-function wwgcbar_settings_link( $links ) {
-	$settings_link = "<a href='admin.php?page=wwgcbar-options'>".__('Settings').'</a>';
+function wwgcbar_settings_link($links) {
+    if (!current_user_can('manage_options')) {
+        return $links;
+    }
 
-	array_push(
-		$links,
-		$settings_link
-	);
-	return $links;
+    $settings_link = '<a href="admin.php?page=wwgcbar-options">' . __('Settings') . '</a>';
+    $links[] = $settings_link;
+    return $links;
 }
 
-add_filter('plugin_action_links_'.$pluginFile, 'wwgcbar_settings_link' );
+global $pluginFile;
+add_filter('plugin_action_links_' . $pluginFile, 'wwgcbar_settings_link');
+
+// SANITIZATION FUNCTION
+function wwgcbar_sanitize_settings($input) {
+    $sanitized = array();
+
+    // Sanitize checkbox fields
+    $sanitized['enable'] = !empty($input['enable']) ? 1 : 0;
+    $sanitized['position'] = !empty($input['position']) ? 1 : 0;
+    $sanitized['pp_target'] = !empty($input['pp_target']) ? 1 : 0;
+    $sanitized['buttons_swap'] = !empty($input['buttons_swap']) ? 1 : 0;
+    $sanitized['cookies_non_essential'] = !empty($input['cookies_non_essential']) ? 1 : 0;
+
+    // Sanitize text fields
+    $sanitized['content'] = !empty($input['content']) ? wp_kses_post($input['content']) : '';
+    $sanitized['content1'] = !empty($input['content1']) ? wp_kses_post($input['content1']) : '';
+    $sanitized['content2'] = !empty($input['content2']) ? wp_kses_post($input['content2']) : '';
+    $sanitized['content3'] = !empty($input['content3']) ? wp_kses_post($input['content3']) : '';
+    $sanitized['content4'] = !empty($input['content4']) ? wp_kses_post($input['content4']) : '';
+
+    // Sanitize color fields
+    $sanitized['content_col'] = !empty($input['content_col']) ? sanitize_hex_color($input['content_col']) : '';
+    $sanitized['content_bg'] = !empty($input['content_bg']) ? sanitize_hex_color($input['content_bg']) : '';
+    $sanitized['content_col_link'] = !empty($input['content_col_link']) ? sanitize_hex_color($input['content_col_link']) : '';
+    $sanitized['button_1_col'] = !empty($input['button_1_col']) ? sanitize_hex_color($input['button_1_col']) : '';
+    $sanitized['button_1_bg'] = !empty($input['button_1_bg']) ? sanitize_hex_color($input['button_1_bg']) : '';
+    $sanitized['button_2_col'] = !empty($input['button_2_col']) ? sanitize_hex_color($input['button_2_col']) : '';
+    $sanitized['button_2_bg'] = !empty($input['button_2_bg']) ? sanitize_hex_color($input['button_2_bg']) : '';
+
+    // Sanitize URL field
+    $sanitized['pp_link'] = !empty($input['pp_link']) ? esc_url_raw($input['pp_link']) : '';
+
+    // Sanitize text fields
+    $sanitized['button_1_text'] = !empty($input['button_1_text']) ? sanitize_text_field($input['button_1_text']) : '';
+    $sanitized['button_2_text'] = !empty($input['button_2_text']) ? sanitize_text_field($input['button_2_text']) : '';
+
+    // Sanitize tracking code with strict rules
+    $allowed_tracking_html = array(
+        'script' => array(
+            'src' => array(),
+            'async' => array(),
+            'defer' => array(),
+            'charset' => array(),
+            'type' => array(),
+            'id' => array()
+        ),
+        'meta' => array(
+            'name' => array(),
+            'content' => array(),
+            'charset' => array(),
+            'http-equiv' => array()
+        ),
+        'noscript' => array(),
+        'iframe' => array(
+            'src' => array(),
+            'width' => array(),
+            'height' => array(),
+            'frameborder' => array(),
+            'allow' => array(),
+            'allowfullscreen' => array()
+        ),
+        'link' => array(
+            'rel' => array(),
+            'href' => array(),
+            'type' => array()
+        )
+    );
+    $sanitized['content_tracking_code'] = !empty($input['content_tracking_code']) ? wp_kses($input['content_tracking_code'], $allowed_tracking_html) : '';
+
+    // Sanitize custom shortcode HTML
+    $allowed_shortcode_html = array(
+        'a' => array(
+            'href' => array(),
+            'id' => array(),
+            'class' => array(),
+            'style' => array(),
+            'title' => array(),
+            'target' => array()
+        ),
+        'span' => array(
+            'class' => array(),
+            'style' => array(),
+            'id' => array()
+        ),
+        'div' => array(
+            'class' => array(),
+            'style' => array(),
+            'id' => array()
+        ),
+        'button' => array(
+            'type' => array(),
+            'class' => array(),
+            'style' => array(),
+            'id' => array(),
+            'onclick' => array()
+        ),
+        'img' => array(
+            'src' => array(),
+            'alt' => array(),
+            'class' => array(),
+            'style' => array(),
+            'width' => array(),
+            'height' => array()
+        )
+    );
+    $sanitized['cookie_shortcode'] = !empty($input['cookie_shortcode']) ? wp_kses($input['cookie_shortcode'], $allowed_shortcode_html) : '';
+
+    return $sanitized;
+}
 
 function wwgcbar_options_content() {
+    // Security check
+    if (!current_user_can('manage_options')) {
+        wp_die(__('You do not have sufficient permissions to access this page.'));
+    }
 
-	// init options global
-	global $wwgcbar_options;
+    // Check if form was submitted and verify nonce
+    if (isset($_POST['submit']) && check_admin_referer('wwgcbar_save_settings', 'wwgcbar_nonce')) {
+        // Settings will be sanitized via wwgcbar_sanitize_settings
+        add_settings_error(
+            'wwgcbar_settings',
+            'wwgcbar_settings_updated',
+            __('Settings saved successfully.'),
+            'success'
+        );
+    }
 
-	ob_start(); ?>
+    // init options global
+    global $wwgcbar_options;
 
+    ob_start();
+?>
 <div class="wrap">
-	<div class="wwgcbar-header">
-		<h2><?php _e('WW GDPR Bar Settings', 'wwgcbar_domain'); ?></h2>
-	</div>
-	<div class="wwgcbar-content admin">
-		<form method="post" action="options.php">
+    <div class="wwgcbar-header">
+        <h2><?php echo esc_html__('WW GDPR Bar Settings', 'wwgcbar_domain'); ?></h2>
+        <?php settings_errors('wwgcbar_settings'); ?>
+    </div>
+    <div class="wwgcbar-content admin">
+        <form method="post" action="options.php">
+            <?php
+            settings_fields('wwgcbar_settings_group');
+            wp_nonce_field('wwgcbar_save_settings', 'wwgcbar_nonce');
+            ?>
+            <p class="submit" style="text-align:right;">
+                <input type="submit" name="submit" id="submit" class="button button-primary disabled" value="<?php echo esc_attr__('Save changes', 'wwgcbar_domain'); ?>" />
+            </p>
 
-			<?php settings_fields('wwgcbar_settings_group'); ?>
-			<p class="submit" style="text-align:right;">
-				<input type="submit" name="submit" id="submit" class="button button-primary disabled" value="<?php _e('Save changes', 'wwgcbar_domain'); ?>" />
-			</p>
-
-			<table class="form-table">
-				<tbody>
+            <table class="form-table">
+                <tbody>
 <!-- BAR ENABLE -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[enable]">
-								<?php _e('Status', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<p>
-								<span class="before-input" style="display:inline-block;min-width:60px;">Disabled</span>
-								<label class="switch">
-								  <input name="wwgcbar_settings[enable]" type="checkbox" id="" value="1" <?php checked('1', isset($wwgcbar_options['enable'])); ?>>
-								  <span class="slider round"></span>
-								  <span class="wwgcbar-checkbox-text"></span>
-								</label>
-								<span class="before-input">Enabled</span>
-							</p>
-						</td>
-					</tr>
-<!-- COOKIE VALID DAYS -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[valid]">
-								<?php _e('Technical cookie valid time (days)', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[valid]" type="number" id="wwgcbar_settings[valid]" value="<?php echo isset($wwgcbar_options['valid'])?$wwgcbar_options['valid']:'30'; ?>" class="regular-text" min="1" step="1">
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_enable">
+                                <?php echo esc_html__('Status', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <p>
+                                <span class="before-input" style="display:inline-block;min-width:60px;"><?php echo esc_html__('Disabled', 'wwgcbar_domain'); ?></span>
+                                <label class="switch">
+                                  <input name="wwgcbar_settings[enable]" type="checkbox" id="wwgcbar_settings_enable" value="1" <?php checked('1', isset($wwgcbar_options['enable']) ? $wwgcbar_options['enable'] : 0); ?>>
+                                  <span class="slider round"></span>
+                                  <span class="wwgcbar-checkbox-text"></span>
+                                </label>
+                                <span class="before-input"><?php echo esc_html__('Enabled', 'wwgcbar_domain'); ?></span>
+                            </p>
+                        </td>
+                    </tr>
 <!-- BAR POSITION -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[position]">
-								<?php _e('Bar position', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<p>
-								<span class="before-input" style="display:inline-block;min-width:60px;">Bottom</span>
-								<label class="switch">
-								  <input name="wwgcbar_settings[position]" type="checkbox" id="" value="1" <?php checked('1', isset($wwgcbar_options['position'])); ?>>
-								  <span class="slider round"></span>
-								  <span class="wwgcbar-checkbox-text"></span>
-								</label>
-								<span class="after-input">Top</span>
-							</p>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_position">
+                                <?php echo esc_html__('Bar position', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <p>
+                                <span class="before-input" style="display:inline-block;min-width:60px;"><?php echo esc_html__('Bottom', 'wwgcbar_domain'); ?></span>
+                                <label class="switch">
+                                  <input name="wwgcbar_settings[position]" type="checkbox" id="wwgcbar_settings_position" value="1" <?php checked('1', isset($wwgcbar_options['position']) ? $wwgcbar_options['position'] : 0); ?>>
+                                  <span class="slider round"></span>
+                                  <span class="wwgcbar-checkbox-text"></span>
+                                </label>
+                                <span class="after-input"><?php echo esc_html__('Top', 'wwgcbar_domain'); ?></span>
+                            </p>
+                        </td>
+                    </tr>
 <!-- BAR TEXT CONTENT -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content]">
-								<?php _e('Bar text content', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<textarea name="wwgcbar_settings[content]" id="wwgcbar_settings[content]" class="regular-text"><?php echo isset( $wwgcbar_options['content'])?$wwgcbar_options['content']:''; ?></textarea>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content">
+                                <?php echo esc_html__('Bar text content', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <textarea name="wwgcbar_settings[content]" id="wwgcbar_settings_content" class="regular-text"><?php echo isset($wwgcbar_options['content']) ? esc_textarea($wwgcbar_options['content']) : ''; ?></textarea>
+                        </td>
+                    </tr>
 <!-- BAR TEXT COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content_col]">
-								<?php _e('Bar text colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[content_col]" type="text" id="wwgcbar_settings[content_col]" value="<?php echo isset($wwgcbar_options['content_col'])?$wwgcbar_options['content_col']:''; ?>" class="regular-text" placeholder="#FFFFFF">
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content_col">
+                                <?php echo esc_html__('Bar text colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[content_col]" type="text" id="wwgcbar_settings_content_col" value="<?php echo isset($wwgcbar_options['content_col']) ? esc_attr($wwgcbar_options['content_col']) : ''; ?>" class="regular-text" placeholder="#FFFFFF">
+                        </td>
+                    </tr>
 <!-- BAR BACKGROUND COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content_bg]">
-								<?php _e('Bar background colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[content_bg]" type="text" id="wwgcbar_settings[content_bg]" value="<?php echo isset($wwgcbar_options['content_bg'])?$wwgcbar_options['content_bg']:''; ?>" class="regular-text" placeholder="#000000">
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content_bg">
+                                <?php echo esc_html__('Bar background colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[content_bg]" type="text" id="wwgcbar_settings_content_bg" value="<?php echo isset($wwgcbar_options['content_bg']) ? esc_attr($wwgcbar_options['content_bg']) : ''; ?>" class="regular-text" placeholder="#000000">
+                        </td>
+                    </tr>
 <!-- PRIVACY POLICY LINK -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[pp_link]">
-								<?php _e('Privacy policy link', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[pp_link]" type="text" placeholder="/privacy-policy" id="wwgcbar_settings[pp_link]" value="<?php echo isset($wwgcbar_options['pp_link'])?$wwgcbar_options['pp_link']:''; ?>" class="regular-text">
-							<p class="description">
-								<?php _e('Privacy Policy / Terms & Conditions page link', 'wwgcbar_domain'); ?>
-							</p>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_pp_link">
+                                <?php echo esc_html__('Privacy policy link', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[pp_link]" type="text" placeholder="/privacy-policy" id="wwgcbar_settings_pp_link" value="<?php echo isset($wwgcbar_options['pp_link']) ? esc_attr($wwgcbar_options['pp_link']) : ''; ?>" class="regular-text">
+                            <p class="description">
+                                <?php echo esc_html__('Privacy Policy / Terms & Conditions page link', 'wwgcbar_domain'); ?>
+                            </p>
+                        </td>
+                    </tr>
 <!-- PRIVACY POLICY OPEN TARGET -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[pp_target]">
-								<?php _e('Open link in a new tab', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<p>
-								<span class="before-input" style="display:inline-block;min-width:60px;">Disabled</span>
-								<label class="switch">
-								  <input name="wwgcbar_settings[pp_target]" type="checkbox" id="" value="1" <?php checked('1', isset($wwgcbar_options['pp_target'])); ?>>
-								  <span class="slider round"></span>
-								  <span class="wwgcbar-checkbox-text"></span>
-								</label>
-								<span class="before-input">Enabled</span>
-							</p>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_pp_target">
+                                <?php echo esc_html__('Open link in a new tab', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <p>
+                                <span class="before-input" style="display:inline-block;min-width:60px;"><?php echo esc_html__('Disabled', 'wwgcbar_domain'); ?></span>
+                                <label class="switch">
+                                  <input name="wwgcbar_settings[pp_target]" type="checkbox" id="wwgcbar_settings_pp_target" value="1" <?php checked('1', isset($wwgcbar_options['pp_target']) ? $wwgcbar_options['pp_target'] : 0); ?>>
+                                  <span class="slider round"></span>
+                                  <span class="wwgcbar-checkbox-text"></span>
+                                </label>
+                                <span class="before-input"><?php echo esc_html__('Enabled', 'wwgcbar_domain'); ?></span>
+                            </p>
+                        </td>
+                    </tr>
 <!-- PRIVACY POLICY LINK COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content_col]">
-								<?php _e('Privacy policy link colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[content_col_link]" type="text" id="wwgcbar_settings[content_col_link]" value="<?php echo isset($wwgcbar_options['content_col_link'])?$wwgcbar_options['content_col_link']:''; ?>" class="regular-text" placeholder="#FFFFFF">
-						</td>
-					</tr>
-<!-- ACCEPT BUTTON TEXT -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[button_1_text]">
-								<?php _e('Accept button text', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[button_1_text]" type="text" id="wwgcbar_settings[button_1_text]" value="<?php echo isset($wwgcbar_options['button_1_text'])?$wwgcbar_options['button_1_text']:''; ?>" class="regular-text">
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content_col_link">
+                                <?php echo esc_html__('Privacy policy link colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[content_col_link]" type="text" id="wwgcbar_settings_content_col_link" value="<?php echo isset($wwgcbar_options['content_col_link']) ? esc_attr($wwgcbar_options['content_col_link']) : ''; ?>" class="regular-text" placeholder="#FFFFFF">
+                        </td>
+                    </tr>
+<!-- ACCEPT BUTTON -->
+                    <tr>
+                        <th>
+                            <strong><?php echo esc_html__('Accept button', 'wwgcbar_domain'); ?></strong>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_button_1_text">
+                                <?php echo esc_html__('Accept button text', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[button_1_text]" type="text" id="wwgcbar_settings_button_1_text" value="<?php echo isset($wwgcbar_options['button_1_text']) ? esc_attr($wwgcbar_options['button_1_text']) : ''; ?>" class="regular-text">
+                        </td>
+                    </tr>
 <!-- ACCEPT BUTTON TEXT COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[button_1_col]">
-								<?php _e('Accept button text colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[button_1_col]" type="text" id="wwgcbar_settings[button_1_col]" value="<?php echo isset($wwgcbar_options['button_1_col'])?$wwgcbar_options['button_1_col']:''; ?>" class="regular-text" placeholder="#FFFFFF">
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_button_1_col">
+                                <?php echo esc_html__('Accept button text colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[button_1_col]" type="text" id="wwgcbar_settings_button_1_col" value="<?php echo isset($wwgcbar_options['button_1_col']) ? esc_attr($wwgcbar_options['button_1_col']) : ''; ?>" class="regular-text" placeholder="#FFFFFF">
+                        </td>
+                    </tr>
 <!-- ACCEPT BUTTON BACKGROUND COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[button_1_bg]">
-								<?php _e('Accept button background colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[button_1_bg]" type="text" id="wwgcbar_settings[button_1_bg]" value="<?php echo isset($wwgcbar_options['button_1_bg'])?$wwgcbar_options['button_1_bg']:''; ?>" class="regular-text" placeholder="#000000">
-						</td>
-					</tr>
-<!-- SETTINGS BUTTON TEXT -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[button_2_text]">
-								<?php _e('Settings button text', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[button_2_text]" type="text" id="wwgcbar_settings[button_2_text]" value="<?php echo isset($wwgcbar_options['button_2_text'])?$wwgcbar_options['button_2_text']:''; ?>" class="regular-text">
-						</td>
-					</tr>
-<!-- MORE INFO BUTTON TEXT COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[button_2_col]">
-								<?php _e('More information button text colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[button_2_col]" type="text" id="wwgcbar_settings[button_2_text]" value="<?php echo isset($wwgcbar_options['button_2_col'])?$wwgcbar_options['button_2_col']:''; ?>" class="regular-text" placeholder="#FFFFFF">
-						</td>
-					</tr>
-<!-- MORE INFO BUTTON BACKGROUND COLOR -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[button_2_bg]">
-								<?php _e('More information button background colour', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<input name="wwgcbar_settings[button_2_bg]" type="text" id="wwgcbar_settings[button_2_bg]" value="<?php echo isset($wwgcbar_options['button_2_bg'])?$wwgcbar_options['button_2_bg']:''; ?>" class="regular-text" placeholder="#000000">
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_button_1_bg">
+                                <?php echo esc_html__('Accept button background colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[button_1_bg]" type="text" id="wwgcbar_settings_button_1_bg" value="<?php echo isset($wwgcbar_options['button_1_bg']) ? esc_attr($wwgcbar_options['button_1_bg']) : ''; ?>" class="regular-text" placeholder="#000000">
+                        </td>
+                    </tr>
+<!-- SETTINGS BUTTON -->
+                    <tr>
+                        <th>
+                            <strong><?php echo esc_html__('Settings button', 'wwgcbar_domain'); ?></strong>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_button_2_text">
+                                <?php echo esc_html__('Settings button text', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[button_2_text]" type="text" id="wwgcbar_settings_button_2_text" value="<?php echo isset($wwgcbar_options['button_2_text']) ? esc_attr($wwgcbar_options['button_2_text']) : ''; ?>" class="regular-text">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_button_2_col">
+                                <?php echo esc_html__('Setting button text colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[button_2_col]" type="text" id="wwgcbar_settings_button_2_col" value="<?php echo isset($wwgcbar_options['button_2_col']) ? esc_attr($wwgcbar_options['button_2_col']) : ''; ?>" class="regular-text" placeholder="#FFFFFF">
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_button_2_bg">
+                                <?php echo esc_html__('Settings button background colour', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <input name="wwgcbar_settings[button_2_bg]" type="text" id="wwgcbar_settings_button_2_bg" value="<?php echo isset($wwgcbar_options['button_2_bg']) ? esc_attr($wwgcbar_options['button_2_bg']) : ''; ?>" class="regular-text" placeholder="#000000">
+                        </td>
+                    </tr>
 <!-- SWAP BUTTONS PLACES -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[buttons_swap]">
-								<?php _e('Swap buttons', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<p>
-								<span class="before-input" style="display:inline-block;min-width:60px;">Accept / Settings</span>
-								<label class="switch">
-								  <input name="wwgcbar_settings[buttons_swap]" type="checkbox" id="" value="1" <?php checked('1', isset($wwgcbar_options['buttons_swap'])); ?>>
-								  <span class="slider round"></span>
-								  <span class="wwgcbar-checkbox-text"></span>
-								</label>
-								<span class="before-input">Settings / Accept</span>
-							</p>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_buttons_swap">
+                                <?php echo esc_html__('Swap buttons', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <p>
+                                <span class="before-input" style="display:inline-block;min-width:60px;"><?php echo esc_html__('Accept / Settings', 'wwgcbar_domain'); ?></span>
+                                <label class="switch">
+                                  <input name="wwgcbar_settings[buttons_swap]" type="checkbox" id="wwgcbar_settings_buttons_swap" value="1" <?php checked('1', isset($wwgcbar_options['buttons_swap']) ? $wwgcbar_options['buttons_swap'] : 0); ?>>
+                                  <span class="slider round"></span>
+                                  <span class="wwgcbar-checkbox-text"></span>
+                                </label>
+                                <span class="before-input"><?php echo esc_html__('Settings / Accept', 'wwgcbar_domain'); ?></span>
+                            </p>
+                        </td>
+                    </tr>
 
 <!-- SETTINGS MODAL		-->
 
 <!-- TEXT CONTENT 1 -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content1]">
-								<?php _e('Policy overview main text part 1', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<textarea name="wwgcbar_settings[content1]" id="wwgcbar_settings[content1]" class="regular-text"><?php echo isset($wwgcbar_options['content1'])?$wwgcbar_options['content1']:''; ?></textarea>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content1">
+                                <?php echo esc_html__('Policy overview main text part 1', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <textarea name="wwgcbar_settings[content1]" id="wwgcbar_settings_content1" class="regular-text"><?php echo isset($wwgcbar_options['content1']) ? esc_textarea($wwgcbar_options['content1']) : ''; ?></textarea>
+                        </td>
+                    </tr>
 <!-- TEXT CONTENT 2 -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content2]">
-								<?php _e('Policy overview main text part 2', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<textarea name="wwgcbar_settings[content2]" id="wwgcbar_settings[content2]" class="regular-text"><?php echo isset($wwgcbar_options['content2'])?$wwgcbar_options['content2']:''; ?></textarea>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content2">
+                                <?php echo esc_html__('Policy overview main text part 2', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <textarea name="wwgcbar_settings[content2]" id="wwgcbar_settings_content2" class="regular-text"><?php echo isset($wwgcbar_options['content2']) ? esc_textarea($wwgcbar_options['content2']) : ''; ?></textarea>
+                        </td>
+                    </tr>
 <!-- TEXT CONTENT 3 NECESSARY -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content3]">
-								<?php _e('Necessary cookies text', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<textarea name="wwgcbar_settings[content3]" id="wwgcbar_settings[content3]" class="regular-text"><?php echo isset($wwgcbar_options['content3'])?$wwgcbar_options['content3']:''; ?></textarea>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content3">
+                                <?php echo esc_html__('Necessary cookies text', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <textarea name="wwgcbar_settings[content3]" id="wwgcbar_settings_content3" class="regular-text"><?php echo isset($wwgcbar_options['content3']) ? esc_textarea($wwgcbar_options['content3']) : ''; ?></textarea>
+                        </td>
+                    </tr>
 <!-- TEXT CONTENT 3 NONNECESARRY-->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[content4]">
-								<?php _e('Non-Necessary cookies text', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<textarea name="wwgcbar_settings[content4]" id="wwgcbar_settings[content4]" class="regular-text"><?php echo isset($wwgcbar_options['content4'])?$wwgcbar_options['content4']:''; ?></textarea>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content4">
+                                <?php echo esc_html__('Non-Necessary cookies text', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <textarea name="wwgcbar_settings[content4]" id="wwgcbar_settings_content4" class="regular-text"><?php echo isset($wwgcbar_options['content4']) ? esc_textarea($wwgcbar_options['content4']) : ''; ?></textarea>
+                        </td>
+                    </tr>
+<!-- GOOGLE TRACKING CODE -->
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_content_tracking_code">
+                                <?php echo esc_html__('Tracking code', 'wwgcbar_domain'); ?>
+                            </label><br>
+                            <small><?php echo esc_html__('Google analytics (GA4) code to insert on page (non-necessary).', 'wwgcbar_domain'); ?></small><br>
+                            <small><?php echo esc_html__('Code will be added to HEAD when non-essential cookies enabled.', 'wwgcbar_domain'); ?></small>
+                        </th>
+                        <td>
+                        	<input name="wwgcbar_settings[content_tracking_code]" type="text" id="wwgcbar_settings_content_tracking_code" value="<?php echo isset($wwgcbar_options['content_tracking_code']) ? esc_attr($wwgcbar_options['content_tracking_code']) : ''; ?>" class="regular-text">
+                        </td>
+                    </tr>
 <!-- COOKIE BAR SETTINGS BUTTON SHORTCODE -->
-					<tr>
-						<th scope="row">
-							<label for="wwgcbar_settings[cookie_shortcode]">
-								<?php _e('Show cookie bar button shortcode', 'wwgcbar_domain'); ?>
-							</label>
-						</th>
-						<td>
-							<div>
-								<input class="regular-text" type="text" readonly value="[wwgcbar]" />
-							</div>
-							<br>
-							<div>
-								<label>Default button code</label>
-								<br>
-								<input class="regular-text" type="text" readonly value='<a id="wwgcbar-collapsed" href="/">Cookies</a>' />
-								<br><br>
-								<label>Custom button code</label>
-								<br>
-								<textarea name="wwgcbar_settings[cookie_shortcode]" id="wwgcbar_settings[cookie_shortcode]" class="regular-text"><?php echo isset($wwgcbar_options['cookie_shortcode'])?$wwgcbar_options['cookie_shortcode']:''; ?></textarea>
-							</div>
-						</td>
-					</tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wwgcbar_settings_cookie_shortcode">
+                                <?php echo esc_html__('Show cookie bar button shortcode', 'wwgcbar_domain'); ?>
+                            </label>
+                        </th>
+                        <td>
+                            <div>
+                                <input class="regular-text" type="text" readonly value="[wwgcbar]" />
+                            </div>
+                            <br>
+                            <div>
+                                <label><?php echo esc_html__('Default button code', 'wwgcbar_domain'); ?></label>
+                                <br>
+                                <input class="regular-text" type="text" readonly value='&lt;a id="wwgcbar-collapsed" href="#"&gt;Cookies&lt;/a&gt;' />
+                                <br><br>
+                                <label><?php echo esc_html__('Custom button code', 'wwgcbar_domain'); ?></label>
+                                <br>
+                                <textarea name="wwgcbar_settings[cookie_shortcode]" id="wwgcbar_settings_cookie_shortcode" class="regular-text"><?php echo isset($wwgcbar_options['cookie_shortcode']) ? esc_textarea($wwgcbar_options['cookie_shortcode']) : ''; ?></textarea>
+                            </div>
+                        </td>
+                    </tr>
 <!-- FORM END -->
-				</tbody>
-			</table>
-			<p class="submit" style="text-align:right;">
-				<input type="submit" name="submit" id="submit" class="button button-primary disabled" value="<?php _e('Save changes', 'wwgcbar_domain'); ?>" />
-			</p>
-		</form>
-	</div>
-	<div class="wwgcbar-footer"></div>
+                </tbody>
+            </table>
+            <p class="submit" style="text-align:right;">
+                <input type="submit" name="submit" id="submit" class="button button-primary disabled" value="<?php echo esc_attr__('Save changes', 'wwgcbar_domain'); ?>" />
+            </p>
+        </form>
+    </div>
+    <div class="wwgcbar-footer"></div>
 </div>
 
 <style>
-
 .wwgcbar-content table tr {
-	padding: 20px 0;
-	border-bottom: 2px solid #ddd;
+    padding: 20px 0;
+    border-bottom: 2px solid #ddd;
 }
 .wwgcbar-content p.submit {
-	margin-top: 30px !important;
+    margin-top: 30px !important;
 }
 </style>
 
-	<?php
-	echo ob_get_clean();
+<?php
+    echo ob_get_clean();
 }
-
 
 // REGISTER SETTINGS
 function wwgcbar_register_settings() {
-	register_setting('wwgcbar_settings_group', 'wwgcbar_settings');
+    register_setting(
+        'wwgcbar_settings_group',
+        'wwgcbar_settings',
+        'wwgcbar_sanitize_settings'
+    );
 }
 
 add_action('admin_init', 'wwgcbar_register_settings');
