@@ -26,7 +26,7 @@ define('WW_GDPR_BAR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 // GLOBAL OPTIONS VARIABLES
 $wwgcbar_options = get_option('wwgcbar_settings');
 $pluginFile = WW_GDPR_BAR_PLUGIN_BASENAME;
-$pluginName = "ww_gdpr_plugin";
+$pluginName = "ww-gdpr-plugin";
 
 // Security: Check if we're in admin and load admin functionality
 if (is_admin()) {
