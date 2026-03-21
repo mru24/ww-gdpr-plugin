@@ -3,12 +3,12 @@
  * Plugin Name: WW GDPR Cookie Bar Plugin
  * Plugin URI: https://www.techstream.agency/
  * Description: Simple GDPR Cookie Compliance plugin.
- * Version: 3.2.2
+ * Version: 3.2.3
  * Author: Val Wroblewski
  * License: GPLv2 or later
  * Text Domain: ww-gdpr-bar
  * Requires at least: 5.0
- * Tested up to: 6.3
+ * Tested up to: 6.9.4
  * Requires PHP: 7.4
  */
 
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('WW_GDPR_BAR_VERSION', '3.2.2');
+define('WW_GDPR_BAR_VERSION', '3.2.3');
 define('WW_GDPR_BAR_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WW_GDPR_BAR_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('WW_GDPR_BAR_PLUGIN_BASENAME', plugin_basename(__FILE__));

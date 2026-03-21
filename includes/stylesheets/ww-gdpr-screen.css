@@ -94,12 +94,14 @@
   border-bottom: 2px solid;
   border-color: inherit;
 }
-.wwgcbar-modal-wrapper h3 {
+
+.wwgcbar-modal-wrapper .wwgcbar-modal-left h3 {
   font-size: 19px;
   color: #333;
   margin: 0 0 15px;
 }
-.wwgcbar-modal-wrapper p, .wwgcbar-modal-wrapper span {
+.wwgcbar-modal-wrapper .wwgcbar-policy-overview p,
+.wwgcbar-modal-wrapper .wwgcbar-policy-overview span {
   font-size: 16px;
   margin: 6px 0 15px;
   color: #666;
@@ -154,10 +156,12 @@
   float: right;
   width: 30%;
 }
-.wwgcbar-modal-wrapper {
-  p.wwgcbar-description.hidden {
-    display: none;
-  }
+.wwgcbar-modal-wrapper p.wwgcbar-description {
+  font-size: 16px;
+  color: #666;
+}
+.wwgcbar-modal-wrapper p.wwgcbar-description.hidden {
+  display: none;
 }
 .wwgcbar-modal-wrapper .wwgcbar-show-description {
   font-size: 14px;
@@ -178,7 +182,7 @@
   position: relative;
   display: inline-block;
   width: 60px;
-  height: 55px !important;
+  height: 34px !important;
 }
 .wwgcbar-modal-wrapper .switch .wwgcbar-checkbox-text {
   position: absolute;
