@@ -32,110 +32,110 @@ add_filter('plugin_action_links_' . $pluginFile, 'wwgcbar_settings_link');
 
 // SANITIZATION FUNCTION
 function wwgcbar_sanitize_settings($input) {
-    $sanitized = array();
+  $sanitized = array();
 
-    // Sanitize checkbox fields
-    $sanitized['enable'] = !empty($input['enable']) ? 1 : 0;
-    $sanitized['position'] = !empty($input['position']) ? 1 : 0;
-    $sanitized['pp_target'] = !empty($input['pp_target']) ? 1 : 0;
-    $sanitized['buttons_swap'] = !empty($input['buttons_swap']) ? 1 : 0;
-    $sanitized['cookies_non_essential'] = !empty($input['cookies_non_essential']) ? 1 : 0;
+  // Sanitize checkbox fields
+  $sanitized['enable'] = !empty($input['enable']) ? 1 : 0;
+  $sanitized['position'] = !empty($input['position']) ? 1 : 0;
+  $sanitized['pp_target'] = !empty($input['pp_target']) ? 1 : 0;
+  $sanitized['buttons_swap'] = !empty($input['buttons_swap']) ? 1 : 0;
+  $sanitized['cookies_non_essential'] = !empty($input['cookies_non_essential']) ? 1 : 0;
 
-    // Sanitize text fields
-    $sanitized['content'] = !empty($input['content']) ? wp_kses_post($input['content']) : '';
-    $sanitized['content1'] = !empty($input['content1']) ? wp_kses_post($input['content1']) : '';
-    $sanitized['content2'] = !empty($input['content2']) ? wp_kses_post($input['content2']) : '';
-    $sanitized['content3'] = !empty($input['content3']) ? wp_kses_post($input['content3']) : '';
-    $sanitized['content4'] = !empty($input['content4']) ? wp_kses_post($input['content4']) : '';
+  // Sanitize text fields
+  $sanitized['content'] = !empty($input['content']) ? wp_kses_post($input['content']) : '';
+  $sanitized['content1'] = !empty($input['content1']) ? wp_kses_post($input['content1']) : '';
+  $sanitized['content2'] = !empty($input['content2']) ? wp_kses_post($input['content2']) : '';
+  $sanitized['content3'] = !empty($input['content3']) ? wp_kses_post($input['content3']) : '';
+  $sanitized['content4'] = !empty($input['content4']) ? wp_kses_post($input['content4']) : '';
 
-    // Sanitize color fields
-    $sanitized['content_col'] = !empty($input['content_col']) ? sanitize_hex_color($input['content_col']) : '';
-    $sanitized['content_bg'] = !empty($input['content_bg']) ? sanitize_hex_color($input['content_bg']) : '';
-    $sanitized['content_col_link'] = !empty($input['content_col_link']) ? sanitize_hex_color($input['content_col_link']) : '';
-    $sanitized['button_1_col'] = !empty($input['button_1_col']) ? sanitize_hex_color($input['button_1_col']) : '';
-    $sanitized['button_1_bg'] = !empty($input['button_1_bg']) ? sanitize_hex_color($input['button_1_bg']) : '';
-    $sanitized['button_2_col'] = !empty($input['button_2_col']) ? sanitize_hex_color($input['button_2_col']) : '';
-    $sanitized['button_2_bg'] = !empty($input['button_2_bg']) ? sanitize_hex_color($input['button_2_bg']) : '';
+  // Sanitize color fields
+  $sanitized['content_col'] = !empty($input['content_col']) ? sanitize_hex_color($input['content_col']) : '';
+  $sanitized['content_bg'] = !empty($input['content_bg']) ? sanitize_hex_color($input['content_bg']) : '';
+  $sanitized['content_col_link'] = !empty($input['content_col_link']) ? sanitize_hex_color($input['content_col_link']) : '';
+  $sanitized['button_1_col'] = !empty($input['button_1_col']) ? sanitize_hex_color($input['button_1_col']) : '';
+  $sanitized['button_1_bg'] = !empty($input['button_1_bg']) ? sanitize_hex_color($input['button_1_bg']) : '';
+  $sanitized['button_2_col'] = !empty($input['button_2_col']) ? sanitize_hex_color($input['button_2_col']) : '';
+  $sanitized['button_2_bg'] = !empty($input['button_2_bg']) ? sanitize_hex_color($input['button_2_bg']) : '';
 
-    // Sanitize URL field
-    $sanitized['pp_link'] = !empty($input['pp_link']) ? esc_url_raw($input['pp_link']) : '';
+  // Sanitize URL field
+  $sanitized['pp_link'] = !empty($input['pp_link']) ? esc_url_raw($input['pp_link']) : '';
 
-    // Sanitize text fields
-    $sanitized['button_1_text'] = !empty($input['button_1_text']) ? sanitize_text_field($input['button_1_text']) : '';
-    $sanitized['button_2_text'] = !empty($input['button_2_text']) ? sanitize_text_field($input['button_2_text']) : '';
+  // Sanitize text fields
+  $sanitized['button_1_text'] = !empty($input['button_1_text']) ? sanitize_text_field($input['button_1_text']) : '';
+  $sanitized['button_2_text'] = !empty($input['button_2_text']) ? sanitize_text_field($input['button_2_text']) : '';
 
-    // Sanitize tracking code with strict rules
-    $allowed_tracking_html = array(
-        'script' => array(
-            'src' => array(),
-            'async' => array(),
-            'defer' => array(),
-            'charset' => array(),
-            'type' => array(),
-            'id' => array()
-        ),
-        'meta' => array(
-            'name' => array(),
-            'content' => array(),
-            'charset' => array(),
-            'http-equiv' => array()
-        ),
-        'noscript' => array(),
-        'iframe' => array(
-            'src' => array(),
-            'width' => array(),
-            'height' => array(),
-            'frameborder' => array(),
-            'allow' => array(),
-            'allowfullscreen' => array()
-        ),
-        'link' => array(
-            'rel' => array(),
-            'href' => array(),
-            'type' => array()
-        )
-    );
-    $sanitized['content_tracking_code'] = !empty($input['content_tracking_code']) ? wp_kses($input['content_tracking_code'], $allowed_tracking_html) : '';
+  // Sanitize tracking code with strict rules
+  $allowed_tracking_html = array(
+    'script' => array(
+      'src' => array(),
+      'async' => array(),
+      'defer' => array(),
+      'charset' => array(),
+      'type' => array(),
+      'id' => array()
+    ),
+    'meta' => array(
+      'name' => array(),
+      'content' => array(),
+      'charset' => array(),
+      'http-equiv' => array()
+    ),
+    'noscript' => array(),
+    'iframe' => array(
+      'src' => array(),
+      'width' => array(),
+      'height' => array(),
+      'frameborder' => array(),
+      'allow' => array(),
+      'allowfullscreen' => array()
+    ),
+    'link' => array(
+      'rel' => array(),
+      'href' => array(),
+      'type' => array()
+    )
+  );
+  $sanitized['content_tracking_code'] = !empty($input['content_tracking_code']) ?
+    wp_kses($input['content_tracking_code'], $allowed_tracking_html) :
+    '';
+  $allowed_shortcode_html = array(
+    'a' => array(
+      'href' => array(),
+      'id' => array(),
+      'class' => array(),
+      'style' => array(),
+      'title' => array(),
+      'target' => array()
+    ),
+    'span' => array(
+      'class' => array(),
+      'style' => array(),
+      'id' => array()
+    ),
+    'div' => array(
+      'class' => array(),
+      'style' => array(),
+      'id' => array()
+    ),
+    'button' => array(
+      'type' => array(),
+      'class' => array(),
+      'style' => array(),
+      'id' => array(),
+      'onclick' => array()
+    ),
+    'img' => array(
+      'src' => array(),
+      'alt' => array(),
+      'class' => array(),
+      'style' => array(),
+      'width' => array(),
+      'height' => array()
+    )
+  );
+  $sanitized['cookie_shortcode'] = !empty($input['cookie_shortcode']) ? wp_kses($input['cookie_shortcode'], $allowed_shortcode_html) : '';
 
-    // Sanitize custom shortcode HTML
-    $allowed_shortcode_html = array(
-        'a' => array(
-            'href' => array(),
-            'id' => array(),
-            'class' => array(),
-            'style' => array(),
-            'title' => array(),
-            'target' => array()
-        ),
-        'span' => array(
-            'class' => array(),
-            'style' => array(),
-            'id' => array()
-        ),
-        'div' => array(
-            'class' => array(),
-            'style' => array(),
-            'id' => array()
-        ),
-        'button' => array(
-            'type' => array(),
-            'class' => array(),
-            'style' => array(),
-            'id' => array(),
-            'onclick' => array()
-        ),
-        'img' => array(
-            'src' => array(),
-            'alt' => array(),
-            'class' => array(),
-            'style' => array(),
-            'width' => array(),
-            'height' => array()
-        )
-    );
-    $sanitized['cookie_shortcode'] = !empty($input['cookie_shortcode']) ? wp_kses($input['cookie_shortcode'], $allowed_shortcode_html) : '';
-
-    return $sanitized;
+  return $sanitized;
 }
 
 function wwgcbar_render_template($template_name, $args = array()) {
@@ -147,26 +147,21 @@ function wwgcbar_render_template($template_name, $args = array()) {
 }
 
 function wwgcbar_options_content() {
-    // Security check
-    if (!current_user_can('manage_options')) {
-        wp_die(__('You do not have sufficient permissions to access this page.'));
-    }
+  if (!current_user_can('manage_options')) {
+    wp_die(__('You do not have sufficient permissions to access this page.'));
+  }
+  if (isset($_POST['submit']) && check_admin_referer('wwgcbar_save_settings', 'wwgcbar_nonce')) {
+    add_settings_error(
+      'wwgcbar_settings',
+      'wwgcbar_settings_updated',
+      __('Settings saved successfully.'),
+      'success'
+    );
+  }
 
-    // Check if form was submitted and verify nonce
-    if (isset($_POST['submit']) && check_admin_referer('wwgcbar_save_settings', 'wwgcbar_nonce')) {
-        // Settings will be sanitized via wwgcbar_sanitize_settings
-        add_settings_error(
-            'wwgcbar_settings',
-            'wwgcbar_settings_updated',
-            __('Settings saved successfully.'),
-            'success'
-        );
-    }
+  global $wwgcbar_options;
 
-    // init options global
-    global $wwgcbar_options;
-
-    ob_start();
+  ob_start();
 ?>
 <div class="wrap">
   <div class="wwgcbar-header">
@@ -578,7 +573,7 @@ function wwgcbar_options_content() {
               </div>
             </td>
           </tr>
-  <!-- FORM END -->
+<!-- FORM END -->
         </tbody>
       </table>
       <p class="submit" style="text-align:right;">
