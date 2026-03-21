@@ -1,8 +1,7 @@
 <?php
 /**
  * Plugin Name: WW GDPR Cookie Bar Plugin
- * Plugin URI: https://www.techstream.agency/
- * Description: Simple GDPR Cookie Compliance plugin.
+ * Description: Simple GDPR Cookie Compliance plugin. Author email: mru24@yahoo.com
  * Version: 3.2.3
  * Author: Val Wroblewski
  * License: GPLv2 or later
